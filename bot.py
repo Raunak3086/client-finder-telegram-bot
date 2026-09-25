@@ -1,4 +1,6 @@
 import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler
@@ -6,6 +8,23 @@ import asyncio
 
 # Import functions from our agent script
 from client_finder_agent import find_potential_clients, generate_pdf
+
+# --- Dummy Web Server for Render ---
+class DummyHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b"Bot is running!")
+
+def keep_alive():
+    port = int(os.environ.get('PORT', 10000))
+    server = HTTPServer(('0.0.0.0', port), DummyHandler)
+    t = threading.Thread(target=server.serve_forever)
+    t.daemon = True
+    t.start()
+    print(f"Dummy web server started on port {port}")
+# -----------------------------------
 
 # Load environment variables
 load_dotenv()
@@ -110,6 +129,9 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
+
+    # Start the dummy web server to satisfy Render's port binding requirement
+    keep_alive()
 
     # Run the bot until the user presses Ctrl-C
     print("Bot is up and running...")
