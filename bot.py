@@ -27,7 +27,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def ask_city(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Stores the city and asks for the business type."""
-    city = update.message.text
+    city = update.message.text.strip()
+    
+    if city.lower() in ['hi', 'hello', 'hey', 'start', '/start']:
+        await update.message.reply_text("Please enter a valid city name (e.g., New York, London).")
+        return CITY
+        
     context.user_data['city'] = city
     
     await update.message.reply_text(
